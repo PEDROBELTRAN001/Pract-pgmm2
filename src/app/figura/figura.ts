@@ -13,7 +13,6 @@ const EX = EDGE * Math.cos(Math.PI / 6);
 const EY = EDGE * Math.sin(Math.PI / 6);
 
 // Vertices of an isometric cube in local (object) space, centered on the canvas.
-// C is the front corner where all three visible faces meet.
 const C: vec2 = [CENTER[0], CENTER[1]];
 const L: vec2 = [CENTER[0] - EX, CENTER[1] - EY];
 const R: vec2 = [CENTER[0] + EX, CENTER[1] - EY];
@@ -47,13 +46,9 @@ function toKonvaPoints(points: vec2[], matrix: mat2d): number[] {
   return out;
 }
 
-/**
- * Draws an isometric 3D cube on a Konva canvas. Position and color are inputs
- * so the controls/transformation logic built by the rest of the team can drive
- * this figure from the outside (e.g. <app-figura [x]="posX" [color]="tinte" />).
- */
 @Component({
   selector: 'app-figura',
+  standalone: true,
   imports: [StageComponent, CoreShapeComponent],
   templateUrl: './figura.html',
   styleUrl: './figura.css',
@@ -65,11 +60,27 @@ export class Figura {
 
   readonly x = input(0);
   readonly y = input(0);
+  readonly rotacion = input(0); // Rotación en grados
+  readonly escala = input(1);   // Escala multiplicativa
   readonly color = input('#2f6fed');
 
+  // Matriz de transformación 2D combinada (Traslación + Rotación + Escala)
   private readonly matrix = computed<mat2d>(() => {
     const m = mat2d.create();
-    mat2d.fromTranslation(m, [this.x(), this.y()]);
+    
+    // 1. Trasladar al centro relativo a las coordenadas X/Y ingresadas
+    mat2d.translate(m, m, [CENTER[0] + this.x(), CENTER[1] + this.y()]);
+    
+    // 2. Aplicar rotación (convertida a radianes) desde el centro del cubo
+    const rad = (this.rotacion() * Math.PI) / 180;
+    mat2d.rotate(m, m, rad);
+    
+    // 3. Aplicar escala
+    mat2d.scale(m, m, [this.escala(), this.escala()]);
+    
+    // 4. Trasladar de vuelta el origen local
+    mat2d.translate(m, m, [-CENTER[0], -CENTER[1]]);
+    
     return m;
   });
 
