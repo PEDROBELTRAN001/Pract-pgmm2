@@ -1,0 +1,19 @@
+@if (isBrowser) {
+  <div class="figura">
+    <div class="posicion">
+      <span class="posicion-titulo">Posición</span>
+      <span>X: {{ x() }}</span>
+      <span>Y: {{ y() }}</span>
+    </div>
+
+    <ko-stage [config]="stageConfig" class="lienzo">
+      <ko-layer>
+        <ko-line [config]="rightConfig()" />
+        <ko-line [config]="leftConfig()" />
+        <ko-line [config]="topConfig()" />
+      </ko-layer>
+    </ko-stage>
+  </div>
+} @else {
+  <p>Cargando figura...</p>
+}

@@ -1,0 +1,33 @@
+.figura {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.lienzo {
+  display: inline-block;
+  border: 1px solid #d8dce3;
+  border-radius: 12px;
+  background: #f7f8fa;
+  overflow: hidden;
+}
+
+.posicion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 90px;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d8dce3;
+  border-radius: 12px;
+  background: #f7f8fa;
+  font-family: "Cascadia Code", "Courier New", monospace;
+  font-size: 0.9rem;
+  color: #1c1c1c;
+}
+
+.posicion-titulo {
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  margin-bottom: 0.25rem;
+}
