@@ -1,13 +1,20 @@
 @if (isBrowser) {
   <div class="figura">
     <div class="posicion">
-      <span class="posicion-titulo">Posición</span>
+      <span class="posicion-titulo">Coordenadas</span>
       <span>X: {{ x() }}</span>
       <span>Y: {{ y() }}</span>
+      <span>Rotación: {{ rotacion() }}°</span>
     </div>
 
     <ko-stage [config]="stageConfig" class="lienzo">
       <ko-layer>
+        <!-- Capa de Reflejo de Suelo -->
+        <ko-line [config]="refRightConfig()" />
+        <ko-line [config]="refLeftConfig()" />
+        <ko-line [config]="refTopConfig()" />
+
+        <!-- Capa Principal del Cubo -->
         <ko-line [config]="rightConfig()" />
         <ko-line [config]="leftConfig()" />
         <ko-line [config]="topConfig()" />
@@ -15,5 +22,5 @@
     </ko-stage>
   </div>
 } @else {
-  <p>Cargando figura...</p>
+  <p>Cargando lienzo 3D...</p>
 }

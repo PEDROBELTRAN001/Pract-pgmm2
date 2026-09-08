@@ -9,11 +9,14 @@ import { Figura } from './figura/figura';
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App { // <-- Verifica que diga App (no AppComponent)
+export class App {
   posX = 0;
   posY = 0;
   rotacionDeg = 0;
   escalaFactor = 1;
+  espejoX = false;
+  espejoY = false;
+  colorFigura = '#2f6fed';
 
   procesarTransformacion(evento: any) {
     switch (evento.accion) {
@@ -27,16 +30,48 @@ export class App { // <-- Verifica que diga App (no AppComponent)
       case 'escalar':
         this.escalaFactor *= evento.factor;
         break;
+      case 'espejoX':
+        this.espejoX = evento.estado;
+        break;
+      case 'espejoY':
+        this.espejoY = evento.estado;
+        break;
+      case 'color':
+        this.colorFigura = evento.color;
+        break;
       case 'saltar':
-        this.posY -= 50;
-        setTimeout(() => (this.posY += 50), 250);
+        this.animarSalto();
+        break;
+      case 'orbitar':
+        this.animarGiro();
         break;
       case 'reset':
         this.posX = 0;
         this.posY = 0;
         this.rotacionDeg = 0;
         this.escalaFactor = 1;
+        this.espejoX = false;
+        this.espejoY = false;
+        this.colorFigura = '#2f6fed';
         break;
     }
+  }
+
+  private animarSalto() {
+    let paso = 0;
+    const intervalo = setInterval(() => {
+      paso++;
+      this.posY -= Math.sin((paso * Math.PI) / 20) * 8;
+      if (paso >= 20) clearInterval(intervalo);
+    }, 16);
+  }
+
+  private animarGiro() {
+    let anguloSumado = 0;
+    const intervalo = setInterval(() => {
+      this.rotacionDeg += 10;
+      anguloSumado += 10;
+      if (anguloSumado >= 360) clearInterval(intervalo);
+    }, 16);
   }
 }
