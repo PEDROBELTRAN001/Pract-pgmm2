@@ -1,0 +1,2 @@
+npm install konva ng2-konva 
+npm install gl-matrix 
