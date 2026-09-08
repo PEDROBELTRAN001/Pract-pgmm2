@@ -1,0 +1,14 @@
+:host {
+  display: block;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+main {
+  text-align: center;
+  padding: 1.5rem 0 0;
+}
+
+h1 {
+  font-size: 1.5rem;
+  margin: 0;
+}
