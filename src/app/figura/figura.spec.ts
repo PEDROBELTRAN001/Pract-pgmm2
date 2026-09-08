@@ -1,17 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FiguraComponent } from './figura'; // Nombre corregido
 
-import { Figura } from './figura';
-
-describe('Figura', () => {
-  let component: Figura;
-  let fixture: ComponentFixture<Figura>;
+describe('FiguraComponent', () => {
+  let component: FiguraComponent;
+  let fixture: ComponentFixture<FiguraComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Figura],
+      imports: [FiguraComponent],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(Figura);
+    fixture = TestBed.createComponent(FiguraComponent);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
