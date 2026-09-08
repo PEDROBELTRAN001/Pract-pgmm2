@@ -1,6 +1,6 @@
 <main class="app-container">
   <div class="content-layout">
-    <app-controles (transformacion)="procesarTransformacion($event)" />
+    
 
     <app-figura 
       [x]="posX" 
@@ -11,6 +11,6 @@
       [espejoY]="espejoY"
       [color]="colorFigura"
     />
-    
+    <app-controles (transformacion)="procesarTransformacion($event)" />
   </div>
 </main>
