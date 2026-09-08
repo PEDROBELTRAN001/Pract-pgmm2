@@ -3,9 +3,9 @@ import { isPlatformBrowser } from '@angular/common';
 import { StageComponent, CoreShapeComponent } from 'ng2-konva';
 import { mat2d, vec2 } from 'gl-matrix';
 
-const CANVAS_WIDTH = 900;
-const CANVAS_HEIGHT = 650;
-const CENTER: vec2 = [CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 20];
+const CANVAS_WIDTH = 1100;
+const CANVAS_HEIGHT = 780;
+const CENTER: vec2 = [CANVAS_WIDTH / 2, 260];
 
 // Edge length and isometric projection offsets (30° cube).
 const EDGE = 60;
@@ -25,6 +25,82 @@ const RB: vec2 = [CENTER[0] + EX, CENTER[1] - EY + EDGE];
 const TOP_FACE: vec2[] = [C, R, T, L];
 const LEFT_FACE: vec2[] = [B, C, L, LB];
 const RIGHT_FACE: vec2[] = [B, C, R, RB];
+
+// Pixel-art silhouette of the Chrome "no internet" dinosaur, drawn as a grid
+// of blocks ('#' = filled) so it matches the game's blocky look. Sized to
+// roughly match the cube's own bounding box, and placed below it. The tail
+// is the wedge added on the left (cols 0-4) at rows 5-9, tapering to a point
+// and merging into the body's back at row 9.
+const DINO_GRID: readonly string[] = [
+  '..................######',
+  '.................#####.##',
+  '.................########',
+  '.................#####...',
+  '.................########',
+  '................#####....',
+  '....#......##########....',
+  '...##...#############....',
+  '.####..#################',
+  '#####.###############..#.',
+  '####################....',
+  '......#############......',
+  '.......############......',
+  '........###...###........',
+  '........###...###........',
+  '........###...###........',
+  '........###...###........',
+  '........####..####.......',
+  '........####..####.......',
+];
+const DINO_EYE = { row: 1, col: 22 };
+const DINO_ARM = { row: 8, col: 19 };
+const DINO_CELL = 6;
+const DINO_WIDTH = DINO_GRID[0].length * DINO_CELL;
+const DINO_HEIGHT = DINO_GRID.length * DINO_CELL;
+const DINO_X = CENTER[0] - DINO_WIDTH / 2;
+const DINO_Y = CANVAS_HEIGHT - DINO_HEIGHT - 60;
+
+interface PixelRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  fill: string;
+}
+
+function buildDinoBody(): PixelRect[] {
+  const rects: PixelRect[] = [];
+  DINO_GRID.forEach((rowStr, row) => {
+    for (let col = 0; col < rowStr.length; col++) {
+      if (rowStr[col] !== '#') continue;
+      rects.push({
+        x: DINO_X + col * DINO_CELL,
+        y: DINO_Y + row * DINO_CELL,
+        width: DINO_CELL,
+        height: DINO_CELL,
+        fill: '#535353',
+      });
+    }
+  });
+  return rects;
+}
+
+const DINO_BODY: PixelRect[] = buildDinoBody();
+const DINO_EYE_RECT: PixelRect = {
+  x: DINO_X + DINO_EYE.col * DINO_CELL,
+  y: DINO_Y + DINO_EYE.row * DINO_CELL,
+  width: DINO_CELL,
+  height: DINO_CELL,
+  fill: '#f7f8fa',
+};
+// Tiny forearm hanging from the chest, below the neck.
+const DINO_ARM_RECT: PixelRect = {
+  x: DINO_X + DINO_ARM.col * DINO_CELL,
+  y: DINO_Y + DINO_ARM.row * DINO_CELL,
+  width: DINO_CELL,
+  height: 2 * DINO_CELL,
+  fill: '#535353',
+};
 
 /** Lightens (positive percent) or darkens (negative percent) a #rrggbb color. */
 function shade(hex: string, percent: number): string {
@@ -62,6 +138,10 @@ export class Figura {
   protected readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   protected readonly stageConfig = { width: CANVAS_WIDTH, height: CANVAS_HEIGHT };
+
+  protected readonly dinoBody = DINO_BODY;
+  protected readonly dinoEye = DINO_EYE_RECT;
+  protected readonly dinoArm = DINO_ARM_RECT;
 
   readonly x = input(0);
   readonly y = input(0);

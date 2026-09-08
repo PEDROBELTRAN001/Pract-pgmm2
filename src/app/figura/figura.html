@@ -12,6 +12,13 @@
         <ko-line [config]="leftConfig()" />
         <ko-line [config]="topConfig()" />
       </ko-layer>
+      <ko-layer>
+        @for (bloque of dinoBody; track $index) {
+          <ko-rect [config]="bloque" />
+        }
+        <ko-rect [config]="dinoArm" />
+        <ko-rect [config]="dinoEye" />
+      </ko-layer>
     </ko-stage>
   </div>
 } @else {
