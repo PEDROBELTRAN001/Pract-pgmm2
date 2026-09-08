@@ -1,1 +1,33 @@
-<p>controles works!</p>
+<div class="controles-panel">
+  <h3>Panel de Control</h3>
+
+  <div class="seccion">
+    <h4>Movimiento (Traslación)</h4>
+    <div class="pad-direccion">
+      <button (click)="mover(0, -10)">▲</button>
+      <div class="fila-horizontal">
+        <button (click)="mover(-10, 0)">◄</button>
+        <button (click)="resetear()">●</button>
+        <button (click)="mover(10, 0)">►</button>
+      </div>
+      <button (click)="mover(0, 10)">▼</button>
+    </div>
+  </div>
+
+  <div class="seccion">
+    <h4>Giro (Rotación)</h4>
+    <div class="btn-group">
+      <button (click)="rotar(-15)">↺ -15°</button>
+      <button (click)="rotar(15)">↻ +15°</button>
+    </div>
+  </div>
+
+  <div class="seccion">
+    <h4>Acciones Rápidas</h4>
+    <div class="btn-group">
+      <button class="btn-accion" (click)="saltar()">🦘 Saltar</button>
+      <button class="btn-accion" (click)="escalar(1.2)">🔍 Agrandar</button>
+      <button class="btn-accion" (click)="escalar(0.8)">🔍 Reducir</button>
+    </div>
+  </div>
+</div>
