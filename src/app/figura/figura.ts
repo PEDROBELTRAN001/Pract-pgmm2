@@ -1,4 +1,4 @@
-import { Component, PLATFORM_ID, computed, inject, input } from '@angular/core';
+import { Component, PLATFORM_ID, afterNextRender, computed, inject, input, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { StageComponent, CoreShapeComponent } from 'ng2-konva';
 import { mat2d, vec2 } from 'gl-matrix';
@@ -54,8 +54,15 @@ const DINO_ARM = { row: 8, col: 19 };
 const DINO_CELL = 6;
 const DINO_WIDTH = DINO_GRID[0].length * DINO_CELL;
 const DINO_HEIGHT = DINO_GRID.length * DINO_CELL;
-const DINO_X = CENTER[0] - DINO_WIDTH / 2;
-const DINO_Y = CANVAS_HEIGHT - DINO_HEIGHT - 60;
+const DINO_LEG_ROW_START = 12; // rows 0-11 are the body/tail/head, 12+ are the legs
+const DINO_GROUND_Y = CANVAS_HEIGHT - DINO_HEIGHT - 60;
+const DINO_RUN_MIN_X = 40;
+const DINO_RUN_MAX_X = CANVAS_WIDTH - DINO_WIDTH - 40;
+const DINO_RUN_SPEED = 90; // px/s
+const DINO_LEG_TOGGLE_MS = 160;
+const DINO_JUMP_EVERY_MS = 2600;
+const DINO_JUMP_DURATION_MS = 550;
+const DINO_JUMP_HEIGHT = 70;
 
 interface PixelRect {
   x: number;
@@ -65,35 +72,74 @@ interface PixelRect {
   fill: string;
 }
 
+/** Body/head/tail only (rows 0-11), in local coordinates relative to the dino group. */
 function buildDinoBody(): PixelRect[] {
   const rects: PixelRect[] = [];
-  DINO_GRID.forEach((rowStr, row) => {
+  for (let row = 0; row < DINO_LEG_ROW_START; row++) {
+    const rowStr = DINO_GRID[row];
     for (let col = 0; col < rowStr.length; col++) {
       if (rowStr[col] !== '#') continue;
       rects.push({
-        x: DINO_X + col * DINO_CELL,
-        y: DINO_Y + row * DINO_CELL,
+        x: col * DINO_CELL,
+        y: row * DINO_CELL,
         width: DINO_CELL,
         height: DINO_CELL,
         fill: '#535353',
       });
     }
-  });
+  }
   return rects;
 }
 
+/** The two leg columns from the original grid (rows 12-17), as plain spans. */
+function findLegColumns(): { start: number; end: number }[] {
+  const legRow = DINO_GRID[DINO_LEG_ROW_START];
+  const legs: { start: number; end: number }[] = [];
+  let start = -1;
+  for (let col = 0; col <= legRow.length; col++) {
+    const filled = col < legRow.length && legRow[col] === '#';
+    if (filled && start === -1) start = col;
+    if (!filled && start !== -1) {
+      legs.push({ start, end: col - 1 });
+      start = -1;
+    }
+  }
+  return legs;
+}
+
+const DINO_LEG_HEIGHT_ROWS = DINO_GRID.length - DINO_LEG_ROW_START;
+const [DINO_LEG_1, DINO_LEG_2] = findLegColumns();
+
+/** Builds the two legs for a running frame: one planted, one lifted mid-stride. */
+function buildDinoLegs(liftedLeg: 0 | 1): PixelRect[] {
+  const legs = [DINO_LEG_1, DINO_LEG_2];
+  return legs.map((leg, index) => {
+    const isLifted = index === liftedLeg;
+    const rows = isLifted ? DINO_LEG_HEIGHT_ROWS - 2 : DINO_LEG_HEIGHT_ROWS;
+    const strideShift = isLifted ? (index === 0 ? 1 : -1) : 0;
+    return {
+      x: (leg.start + strideShift) * DINO_CELL,
+      y: DINO_LEG_ROW_START * DINO_CELL,
+      width: (leg.end - leg.start + 1) * DINO_CELL,
+      height: rows * DINO_CELL,
+      fill: '#535353',
+    };
+  });
+}
+
 const DINO_BODY: PixelRect[] = buildDinoBody();
+const DINO_LEG_FRAMES: readonly [PixelRect[], PixelRect[]] = [buildDinoLegs(0), buildDinoLegs(1)];
 const DINO_EYE_RECT: PixelRect = {
-  x: DINO_X + DINO_EYE.col * DINO_CELL,
-  y: DINO_Y + DINO_EYE.row * DINO_CELL,
+  x: DINO_EYE.col * DINO_CELL,
+  y: DINO_EYE.row * DINO_CELL,
   width: DINO_CELL,
   height: DINO_CELL,
   fill: '#f7f8fa',
 };
 // Tiny forearm hanging from the chest, below the neck.
 const DINO_ARM_RECT: PixelRect = {
-  x: DINO_X + DINO_ARM.col * DINO_CELL,
-  y: DINO_Y + DINO_ARM.row * DINO_CELL,
+  x: DINO_ARM.col * DINO_CELL,
+  y: DINO_ARM.row * DINO_CELL,
   width: DINO_CELL,
   height: 2 * DINO_CELL,
   fill: '#535353',
@@ -133,6 +179,78 @@ export class Figura {
   protected readonly dinoBody = DINO_BODY;
   protected readonly dinoEye = DINO_EYE_RECT;
   protected readonly dinoArm = DINO_ARM_RECT;
+
+  // Running (patrols back and forth), leg-alternation, and jump state.
+  private readonly dinoRunX = signal((DINO_RUN_MIN_X + DINO_RUN_MAX_X) / 2);
+  private readonly dinoDirection = signal<1 | -1>(1);
+  private readonly dinoLegFrame = signal<0 | 1>(0);
+  private readonly dinoJumpOffset = signal(0);
+
+  protected readonly dinoLegs = computed(() => DINO_LEG_FRAMES[this.dinoLegFrame()]);
+
+  protected readonly dinoGroupConfig = computed(() => ({
+    // Rounded to whole pixels: fractional positions leave faint seams between
+    // the many adjacent 1-cell rects that make up the pixel art.
+    x: Math.round(this.dinoRunX() + DINO_WIDTH / 2),
+    y: Math.round(DINO_GROUND_Y - this.dinoJumpOffset()),
+    offsetX: DINO_WIDTH / 2,
+    scaleX: this.dinoDirection(),
+  }));
+
+  constructor() {
+    afterNextRender(() => this.runDinoAnimation());
+  }
+
+  private runDinoAnimation(): void {
+    let lastTime = performance.now();
+    let legTimer = 0;
+    let jumpTimer = 0;
+    let jumpElapsed: number | null = null;
+
+    const tick = (now: number) => {
+      const dt = now - lastTime;
+      lastTime = now;
+
+      // Patrol left/right across the canvas, flipping to face the way it's moving.
+      let nextX = this.dinoRunX() + this.dinoDirection() * DINO_RUN_SPEED * (dt / 1000);
+      if (nextX <= DINO_RUN_MIN_X) {
+        nextX = DINO_RUN_MIN_X;
+        this.dinoDirection.set(1);
+      } else if (nextX >= DINO_RUN_MAX_X) {
+        nextX = DINO_RUN_MAX_X;
+        this.dinoDirection.set(-1);
+      }
+      this.dinoRunX.set(nextX);
+
+      // Alternate legs while running.
+      legTimer += dt;
+      if (legTimer >= DINO_LEG_TOGGLE_MS) {
+        legTimer = 0;
+        this.dinoLegFrame.set(this.dinoLegFrame() === 0 ? 1 : 0);
+      }
+
+      // Every so often, jump in a smooth arc.
+      if (jumpElapsed === null) {
+        jumpTimer += dt;
+        if (jumpTimer >= DINO_JUMP_EVERY_MS) {
+          jumpTimer = 0;
+          jumpElapsed = 0;
+        }
+      } else {
+        jumpElapsed += dt;
+        const progress = Math.min(jumpElapsed / DINO_JUMP_DURATION_MS, 1);
+        this.dinoJumpOffset.set(Math.sin(progress * Math.PI) * DINO_JUMP_HEIGHT);
+        if (progress >= 1) {
+          jumpElapsed = null;
+          this.dinoJumpOffset.set(0);
+        }
+      }
+
+      requestAnimationFrame(tick);
+    };
+
+    requestAnimationFrame(tick);
+  }
 
   readonly x = input(0);
   readonly y = input(0);

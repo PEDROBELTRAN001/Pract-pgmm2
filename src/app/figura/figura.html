@@ -20,11 +20,16 @@
         <ko-line [config]="topConfig()" />
       </ko-layer>
       <ko-layer>
-        @for (bloque of dinoBody; track $index) {
-          <ko-rect [config]="bloque" />
-        }
-        <ko-rect [config]="dinoArm" />
-        <ko-rect [config]="dinoEye" />
+        <ko-group [config]="dinoGroupConfig()">
+          @for (bloque of dinoBody; track $index) {
+            <ko-rect [config]="bloque" />
+          }
+          @for (pata of dinoLegs(); track $index) {
+            <ko-rect [config]="pata" />
+          }
+          <ko-rect [config]="dinoArm" />
+          <ko-rect [config]="dinoEye" />
+        </ko-group>
       </ko-layer>
     </ko-stage>
   </div>
