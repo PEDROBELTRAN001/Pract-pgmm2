@@ -4,12 +4,36 @@
   gap: 1rem;
 }
 
+.lienzo-columna {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
 .lienzo {
   display: inline-block;
   border: 1px solid #d8dce3;
   border-radius: 12px;
   background: #f7f8fa;
   overflow: hidden;
+}
+
+.dino-controles {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.dino-controles button {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #c8ccd4;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.dino-controles button:hover {
+  background: #eef1f5;
 }
 
 .posicion {

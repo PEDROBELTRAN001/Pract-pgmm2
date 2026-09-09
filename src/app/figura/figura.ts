@@ -1,4 +1,4 @@
-import { Component, PLATFORM_ID, afterNextRender, computed, inject, input, signal } from '@angular/core';
+import { Component, PLATFORM_ID, computed, inject, input, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { StageComponent, CoreShapeComponent } from 'ng2-konva';
 import { mat2d, vec2 } from 'gl-matrix';
@@ -58,9 +58,7 @@ const DINO_LEG_ROW_START = 12; // rows 0-11 are the body/tail/head, 12+ are the 
 const DINO_GROUND_Y = CANVAS_HEIGHT - DINO_HEIGHT - 60;
 const DINO_RUN_MIN_X = 40;
 const DINO_RUN_MAX_X = CANVAS_WIDTH - DINO_WIDTH - 40;
-const DINO_RUN_SPEED = 90; // px/s
-const DINO_LEG_TOGGLE_MS = 160;
-const DINO_JUMP_EVERY_MS = 2600;
+const DINO_STEP = 45; // px moved per click of the dino's own arrow buttons
 const DINO_JUMP_DURATION_MS = 550;
 const DINO_JUMP_HEIGHT = 70;
 
@@ -180,11 +178,13 @@ export class Figura {
   protected readonly dinoEye = DINO_EYE_RECT;
   protected readonly dinoArm = DINO_ARM_RECT;
 
-  // Running (patrols back and forth), leg-alternation, and jump state.
+  // Position, facing, leg pose and jump offset — all driven by button clicks,
+  // the same way the cube only moves when its own controls are pressed.
   private readonly dinoRunX = signal((DINO_RUN_MIN_X + DINO_RUN_MAX_X) / 2);
   private readonly dinoDirection = signal<1 | -1>(1);
   private readonly dinoLegFrame = signal<0 | 1>(0);
   private readonly dinoJumpOffset = signal(0);
+  private dinoJumping = false;
 
   protected readonly dinoLegs = computed(() => DINO_LEG_FRAMES[this.dinoLegFrame()]);
 
@@ -197,56 +197,27 @@ export class Figura {
     scaleX: this.dinoDirection(),
   }));
 
-  constructor() {
-    afterNextRender(() => this.runDinoAnimation());
+  protected moverDino(direccion: 1 | -1): void {
+    const next = this.dinoRunX() + direccion * DINO_STEP;
+    this.dinoRunX.set(Math.min(DINO_RUN_MAX_X, Math.max(DINO_RUN_MIN_X, next)));
+    this.dinoDirection.set(direccion);
+    this.dinoLegFrame.set(this.dinoLegFrame() === 0 ? 1 : 0);
   }
 
-  private runDinoAnimation(): void {
-    let lastTime = performance.now();
-    let legTimer = 0;
-    let jumpTimer = 0;
-    let jumpElapsed: number | null = null;
+  protected saltarDino(): void {
+    if (this.dinoJumping) return;
+    this.dinoJumping = true;
+    const start = performance.now();
 
     const tick = (now: number) => {
-      const dt = now - lastTime;
-      lastTime = now;
-
-      // Patrol left/right across the canvas, flipping to face the way it's moving.
-      let nextX = this.dinoRunX() + this.dinoDirection() * DINO_RUN_SPEED * (dt / 1000);
-      if (nextX <= DINO_RUN_MIN_X) {
-        nextX = DINO_RUN_MIN_X;
-        this.dinoDirection.set(1);
-      } else if (nextX >= DINO_RUN_MAX_X) {
-        nextX = DINO_RUN_MAX_X;
-        this.dinoDirection.set(-1);
-      }
-      this.dinoRunX.set(nextX);
-
-      // Alternate legs while running.
-      legTimer += dt;
-      if (legTimer >= DINO_LEG_TOGGLE_MS) {
-        legTimer = 0;
-        this.dinoLegFrame.set(this.dinoLegFrame() === 0 ? 1 : 0);
-      }
-
-      // Every so often, jump in a smooth arc.
-      if (jumpElapsed === null) {
-        jumpTimer += dt;
-        if (jumpTimer >= DINO_JUMP_EVERY_MS) {
-          jumpTimer = 0;
-          jumpElapsed = 0;
-        }
+      const progress = Math.min((now - start) / DINO_JUMP_DURATION_MS, 1);
+      this.dinoJumpOffset.set(Math.sin(progress * Math.PI) * DINO_JUMP_HEIGHT);
+      if (progress < 1) {
+        requestAnimationFrame(tick);
       } else {
-        jumpElapsed += dt;
-        const progress = Math.min(jumpElapsed / DINO_JUMP_DURATION_MS, 1);
-        this.dinoJumpOffset.set(Math.sin(progress * Math.PI) * DINO_JUMP_HEIGHT);
-        if (progress >= 1) {
-          jumpElapsed = null;
-          this.dinoJumpOffset.set(0);
-        }
+        this.dinoJumpOffset.set(0);
+        this.dinoJumping = false;
       }
-
-      requestAnimationFrame(tick);
     };
 
     requestAnimationFrame(tick);

@@ -7,31 +7,39 @@
       <span>Rotación: {{ rotacion() }}°</span>
     </div>
 
-    <ko-stage [config]="stageConfig" class="lienzo">
-      <ko-layer>
-        <!-- Capa de Reflejo de Suelo -->
-        <ko-line [config]="refRightConfig()" />
-        <ko-line [config]="refLeftConfig()" />
-        <ko-line [config]="refTopConfig()" />
+    <div class="lienzo-columna">
+      <ko-stage [config]="stageConfig" class="lienzo">
+        <ko-layer>
+          <!-- Capa de Reflejo de Suelo -->
+          <ko-line [config]="refRightConfig()" />
+          <ko-line [config]="refLeftConfig()" />
+          <ko-line [config]="refTopConfig()" />
 
-        <!-- Capa Principal del Cubo -->
-        <ko-line [config]="rightConfig()" />
-        <ko-line [config]="leftConfig()" />
-        <ko-line [config]="topConfig()" />
-      </ko-layer>
-      <ko-layer>
-        <ko-group [config]="dinoGroupConfig()">
-          @for (bloque of dinoBody; track $index) {
-            <ko-rect [config]="bloque" />
-          }
-          @for (pata of dinoLegs(); track $index) {
-            <ko-rect [config]="pata" />
-          }
-          <ko-rect [config]="dinoArm" />
-          <ko-rect [config]="dinoEye" />
-        </ko-group>
-      </ko-layer>
-    </ko-stage>
+          <!-- Capa Principal del Cubo -->
+          <ko-line [config]="rightConfig()" />
+          <ko-line [config]="leftConfig()" />
+          <ko-line [config]="topConfig()" />
+        </ko-layer>
+        <ko-layer>
+          <ko-group [config]="dinoGroupConfig()">
+            @for (bloque of dinoBody; track $index) {
+              <ko-rect [config]="bloque" />
+            }
+            @for (pata of dinoLegs(); track $index) {
+              <ko-rect [config]="pata" />
+            }
+            <ko-rect [config]="dinoArm" />
+            <ko-rect [config]="dinoEye" />
+          </ko-group>
+        </ko-layer>
+      </ko-stage>
+
+      <div class="dino-controles">
+        <button type="button" (click)="moverDino(-1)">◀ Dino</button>
+        <button type="button" (click)="saltarDino()">Saltar</button>
+        <button type="button" (click)="moverDino(1)">Dino ▶</button>
+      </div>
+    </div>
   </div>
 } @else {
   <p>Cargando lienzo 3D...</p>
