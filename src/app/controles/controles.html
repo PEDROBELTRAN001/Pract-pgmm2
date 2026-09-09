@@ -1,1 +1,66 @@
-<p>controles works!</p>
+<div class="controles-card">
+  <div class="header">
+    <h3>⚙️ Panel de Transformaciones</h3>
+  </div>
+
+  <!-- Traslación (D-Pad) -->
+  <div class="seccion">
+    <label class="seccion-titulo">Desplazamiento</label>
+    <div class="dpad">
+      <button class="btn-dpad up" (click)="mover(0, -20)" title="Arriba">▲</button>
+      <button class="btn-dpad left" (click)="mover(-20, 0)" title="Izquierda">◄</button>
+      <button class="btn-dpad center" (click)="resetear()" title="Centrar">●</button>
+      <button class="btn-dpad right" (click)="mover(20, 0)" title="Derecha">►</button>
+      <button class="btn-dpad down" (click)="mover(0, 20)" title="Abajo">▼</button>
+    </div>
+  </div>
+
+  <!-- Rotación y Escala -->
+  <div class="seccion">
+    <label class="seccion-titulo">Orientación & Tamaño</label>
+    <div class="grid-2col">
+      <button class="btn-secundario" (click)="rotar(-15)">↺ -15°</button>
+      <button class="btn-secundario" (click)="rotar(15)">↻ +15°</button>
+      <button class="btn-secundario" (click)="escalar(1.15)">🔍 +15%</button>
+      <button class="btn-secundario" (click)="escalar(0.85)">🔍 -15%</button>
+    </div>
+  </div>
+
+  <!-- Modos Especiales (Espejo y Animaciones) -->
+  <div class="seccion">
+    <label class="seccion-titulo">Efectos & Simetría</label>
+    <div class="grid-2col">
+      <button class="btn-toggle" [class.activo]="espejoX" (click)="toggleEspejoX()">
+        ↔ Espejo X
+      </button>
+      <button class="btn-toggle" [class.activo]="espejoY" (click)="toggleEspejoY()">
+        ↕ Espejo Y
+      </button>
+    </div>
+  </div>
+
+  <!-- Selección de Colores -->
+  <div class="seccion">
+    <label class="seccion-titulo">Paleta de Color</label>
+    <div class="barras-color">
+      <button class="dot-color" style="background: #2f6fed;" (click)="cambiarColor('#2f6fed')"></button>
+      <button class="dot-color" style="background: #e74c3c;" (click)="cambiarColor('#e74c3c')"></button>
+      <button class="dot-color" style="background: #2ecc71;" (click)="cambiarColor('#2ecc71')"></button>
+      <button class="dot-color" style="background: #f1c40f;" (click)="cambiarColor('#f1c40f')"></button>
+      <button class="dot-color" style="background: #9b59b6;" (click)="cambiarColor('#9b59b6')"></button>
+      <button class="dot-color" style="background: #1abc9c;" (click)="cambiarColor('#1abc9c')"></button>
+      <input type="color" class="color-picker" (input)="onCustomColor($event)" title="Personalizado" />
+    </div>
+  </div>
+
+  <!-- Animaciones Rápidas -->
+  <div class="seccion">
+    <label class="seccion-titulo">Animaciones</label>
+    <div class="grid-2col">
+      <button class="btn-accion" (click)="saltar()">Saltar</button>
+      <button class="btn-accion" (click)="orbitar()">Giro 360°</button>
+    </div>
+  </div>
+
+  <button class="btn-reset" (click)="resetear()">Restablecer Todo</button>
+</div>

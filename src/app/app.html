@@ -1,6 +1,16 @@
-<main>
-  <h1>Transformador de Figuras Geométricas</h1>
-  <app-figura />
-</main>
+<main class="app-container">
+  <div class="content-layout">
+    
 
-<router-outlet />
+    <app-figura 
+      [x]="posX" 
+      [y]="posY" 
+      [rotacion]="rotacionDeg" 
+      [escala]="escalaFactor"
+      [espejoX]="espejoX"
+      [espejoY]="espejoY"
+      [color]="colorFigura"
+    />
+    <app-controles (transformacion)="procesarTransformacion($event)" />
+  </div>
+</main>
